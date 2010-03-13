@@ -1,0 +1,8 @@
+<select name="transitions">
+    {% for transition in transitions %}
+        <option {% if transition.selected %}selected="selected"{% endif %}
+                value="{{ transition.id }}">
+            {{ transition.name }}
+        </option>
+    {% endfor %}
+</select>
