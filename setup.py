@@ -3,15 +3,21 @@ import os
 
 version = '1.0a1'
 
+here = os.path.abspath(os.path.dirname(__file__))
+README = open(os.path.join(here, 'README.txt')).read()
+
 setup(name='django-workflows',
       version=version,
-      description="Generic workflows for Django.",
-      long_description=open("README.txt").read() + "\n" +
-                       open(os.path.join("docs", "HISTORY.txt")).read(),
+      description="Generic workflow engine for Django.",
+      long_description=README,      
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
-        "Programming Language :: Python",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+          'Development Status :: 3 - Alpha',
+          'Environment :: Web Environment',
+          'Framework :: Django',
+          'License :: OSI Approved :: BSD License',
+          'Operating System :: OS Independent',
+          'Programming Language :: Python',
         ],
       keywords='django workflows',
       author='Kai Diefenbach',
