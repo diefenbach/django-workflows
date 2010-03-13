@@ -11,6 +11,7 @@ Documenation
    :maxdepth: 1
 
    overview
+   usage
 
 API
 ---

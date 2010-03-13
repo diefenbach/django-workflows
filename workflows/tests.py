@@ -135,7 +135,7 @@ def create_workflow(self):
     self.private = State.objects.create(name="Private", workflow= self.w)
     self.public = State.objects.create(name="Public", workflow= self.w)
 
-    self.make_public = Transition.objects.create(name="Make public",  workflow=self.w, destination = self.public)
+    self.make_public = Transition.objects.create(name="Make public", workflow=self.w, destination = self.public)
     self.make_private = Transition.objects.create(name="Make private", workflow=self.w, destination = self.private)
 
     self.private.transitions.add(self.make_public)

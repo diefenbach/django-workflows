@@ -96,7 +96,7 @@ class Transition(models.Model):
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"))
     destination = models.ForeignKey(State, verbose_name=_(u"Destination"), related_name="destination_state")
     condition = models.CharField(_(u"Condition"), blank=True, max_length=100)
-    permission = models.ForeignKey(Permission)
+    permission = models.ForeignKey(Permission, verbose_name=_(u"Permission"), blank=True, null=True)
 
     def __unicode__(self):
         return self.name
