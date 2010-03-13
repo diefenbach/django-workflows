@@ -20,11 +20,11 @@ Workflows
 A workflow has states and defined transitions from one state to another. The
 transitions can be restricted by permissions.
 
-A workflow can be assinged to models and model instances. All instances will
-"inherit" the worklow of its model. If an instance has an own workflow this 
+A workflow can be assigned to models and model instances. All instances will
+"inherit" the workflow of its model. If an instance has an own workflow this 
 will have precedence. In this way all instances of a content type have the 
-same workflow unless a specific intance of that content type have an other 
-workflow assinged.
+same workflow unless a specific instance of that content type have an other 
+workflow assigned.
 
 Every workflow is responsible for a set of permissions. Every state can
 grant or remove this permissions from the model for groups. In this way 
