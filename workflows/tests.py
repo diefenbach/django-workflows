@@ -1,4 +1,5 @@
 # django imports
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.flatpages.models import FlatPage
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -10,13 +11,60 @@ from django.test.client import Client
 import permissions.utils
 import workflows.utils
 from workflows.models import State
+from workflows.models import StateInheritanceBlock
 from workflows.models import StatePermissionRelation
+from workflows.models import StateObjectRelation
 from workflows.models import Transition
 from workflows.models import Workflow
+from workflows.models import WorkflowModelRelation
+from workflows.models import WorkflowObjectRelation
 from workflows.models import WorkflowPermissionRelation
 
-class PermissionsTestCase(TestCase):
+class WorkflowTestCase(TestCase):
+    """Tests a simple workflow without permissions.
     """
+    def setUp(self):
+        """
+        """
+        create_workflow(self)
+
+    def test_get_states(self):
+        """
+        """
+        states = self.w.states.all()
+        self.assertEqual(states[0], self.private)
+        self.assertEqual(states[1], self.public)
+
+    def test_transitions(self):
+        """
+        """
+        transitions = self.public.transitions.all()
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_private)
+
+        transitions = self.private.transitions.all()
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_public)
+
+    def test_get_transitions(self):
+        """
+        """
+        request = create_request()
+        transitions = self.private.get_allowed_transitions(request.user)
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_public)
+
+        transitions = self.public.get_allowed_transitions(request.user)
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_private)
+
+    def test_unicode(self):
+        """
+        """
+        self.assertEqual(self.w.__unicode__(), u"Standard")
+
+class PermissionsTestCase(TestCase):
+    """Tests a simple workflow with permissions.
     """
     def setUp(self):
         """
@@ -42,32 +90,65 @@ class PermissionsTestCase(TestCase):
         wpr = WorkflowPermissionRelation.objects.create(workflow=self.w, permission=self.view)
         wpr = WorkflowPermissionRelation.objects.create(workflow=self.w, permission=self.edit)
 
-        # Add permissions for the single states
+        # Add permissions for single states
         spr = StatePermissionRelation.objects.create(state=self.public, permission=self.view, group=self.owner)
         spr = StatePermissionRelation.objects.create(state=self.private, permission=self.view, group=self.owner)
         spr = StatePermissionRelation.objects.create(state=self.private, permission=self.edit, group=self.owner)
+
+        # Add inheritance block for single states
+        sib = StateInheritanceBlock.objects.create(state=self.private, permission=self.view)
+        sib = StateInheritanceBlock.objects.create(state=self.private, permission=self.edit)
+        sib = StateInheritanceBlock.objects.create(state=self.public, permission=self.edit)
 
         workflows.utils.set_workflow(self.w, self.page_1)
 
     def test_set_state(self):
         """
         """
+        # Permissions
         result = permissions.utils.has_permission("edit", self.user, self.page_1)
         self.assertEqual(result, True)
 
         result = permissions.utils.has_permission("view", self.user, self.page_1)
         self.assertEqual(result, True)
+        
+        # Inheritance
+        result = permissions.utils.is_inherited("view", self.page_1)
+        self.assertEqual(result, False)
 
+        result = permissions.utils.is_inherited("edit", self.page_1)
+        self.assertEqual(result, False)
+        
+        # Change state
         workflows.utils.set_state(self.page_1, self.public)
 
+        # Permissions        
         result = permissions.utils.has_permission("edit", self.user, self.page_1)
         self.assertEqual(result, False)
 
         result = permissions.utils.has_permission("view", self.user, self.page_1)
         self.assertEqual(result, True)
 
+        # Inheritance        
+        result = permissions.utils.is_inherited("view", self.page_1)
+        self.assertEqual(result, True)
+
+        result = permissions.utils.is_inherited("edit", self.page_1)
+        self.assertEqual(result, False)
+
+    def test_do_transition(self):
+        """
+        """
+        state = workflows.utils.get_state(self.page_1)
+        self.assertEqual(state.name, self.private.name)
+
+        workflows.utils.do_transition(self.page_1, self.make_public, self.user)
+
+        state = workflows.utils.get_state(self.page_1)
+        self.assertEqual(state.name, self.public.name)
+
 class UtilsTestCase(TestCase):
-    """
+    """Tests various methods of the utils module.
     """
     def setUp(self):
         """
@@ -89,43 +170,69 @@ class UtilsTestCase(TestCase):
         result = workflows.utils.get_state(self.user)
         self.assertEqual(result, self.w.initial_state)
 
-class WorkflowTestCase(TestCase):
-    """
+class StateTestCase(TestCase):
+    """Tests the State model
     """
     def setUp(self):
         """
         """
         create_workflow(self)
 
-    def test_get_states(self):
+    def test_unicode(self):
         """
         """
-        states = self.w.states.all()
-        self.assertEqual(states[0], self.s1)
-        self.assertEqual(states[1], self.s2)
+        self.assertEqual(self.private.__unicode__(), u"Private")
 
-    def test_transitions(self):
+class TransitionTestCase(TestCase):
+    """Tests the Transition model
+    """
+    def setUp(self):
         """
         """
-        transitions = self.s1.transitions.all()
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.t2)
+        create_workflow(self)
 
-        transitions = self.s2.transitions.all()
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.t1)
-
-    def test_get_transitions(self):
+    def test_unicode(self):
         """
         """
-        request = create_request()
-        transitions = self.s1.get_allowed_transitions(request.user)
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.t2)
+        self.assertEqual(self.make_private.__unicode__(), u"Make private")
 
-        transitions = self.s2.get_allowed_transitions(request.user)
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.t1)
+class RelationsTestCase(TestCase):
+    """Tests various Relations models.
+    """
+    def setUp(self):
+        """
+        """
+        create_workflow(self)
+        self.page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
+
+    def test_unicode(self):
+        """
+        """
+        # WorkflowObjectRelation
+        workflows.utils.set_workflow(self.w, self.page_1)
+        wor = WorkflowObjectRelation.objects.filter()[0]
+        self.assertEqual(wor.__unicode__(), "flat page 1 - Standard")
+
+        # StateObjectRelation
+        workflows.utils.set_state(self.page_1, self.public)
+        sor = StateObjectRelation.objects.filter()[0]
+        self.assertEqual(sor.__unicode__(), "flat page 1 - Public")
+
+        # WorkflowModelRelation
+        ctype = ContentType.objects.get_for_model(self.page_1)
+        workflows.utils.set_workflow(self.w, ctype)
+        wmr = WorkflowModelRelation.objects.filter()[0]
+        self.assertEqual(wmr.__unicode__(), "flat page - Standard")
+
+        # WorkflowPermissionRelation
+        self.view = permissions.utils.register_permission("View", "view")
+        wpr = WorkflowPermissionRelation.objects.create(workflow=self.w, permission=self.view)
+        self.assertEqual(wpr.__unicode__(), "Standard View")
+
+        # StatePermissionRelation
+        self.owner = permissions.utils.register_group("Owner")
+        spr = StatePermissionRelation.objects.create(state=self.public, permission=self.view, group=self.owner)
+        self.assertEqual(spr.__unicode__(), "Public Owner View")
 
 # Helpers ####################################################################
 

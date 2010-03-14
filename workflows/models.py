@@ -187,6 +187,24 @@ class WorkflowPermissionRelation(models.Model):
     def __unicode__(self):
         return "%s %s" % (self.workflow.name, self.permission.name)
 
+class StateInheritanceBlock(models.Model):
+    """Stores inheritance block for state and permission.
+
+    **Attributes:**
+
+    state
+        The state for which the inheritance is blocked. Needs to be a State
+        instance.
+    permission
+        The permission for which the instance is blocked. Needs to be a
+        Permission instance.
+    """
+    state = models.ForeignKey(State, verbose_name=_(u"State"))
+    permission = models.ForeignKey(Permission, verbose_name=_(u"Permission"))
+
+    def __unicode__(self):
+        return "%s %s" % (self.state.name, self.permission.name)
+    
 class StatePermissionRelation(models.Model):
     """Stores granted permission for state and group.
 

@@ -4,10 +4,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError
 
 # workflows imports
-from workflows.models import WorkflowObjectRelation
-from workflows.models import WorkflowModelRelation
+from workflows.models import StateInheritanceBlock
 from workflows.models import StateObjectRelation
 from workflows.models import StatePermissionRelation
+from workflows.models import Transition
+from workflows.models import WorkflowModelRelation
+from workflows.models import WorkflowObjectRelation
 from workflows.models import WorkflowPermissionRelation
 
 # permissions imports
@@ -147,6 +149,22 @@ def get_state(obj):
     else:
         return sor.state
 
+def do_transition(obj, transition, user):
+    """Processes the passed transition to the passed object (if allowed).
+    """
+    if not isinstance(transition, Transition):
+        try:
+            transition = Transition.objects.get(name=transition)
+        except Transition.DoesNotExist:
+            return False
+
+    transitions = get_allowed_transitions(obj, user)
+    if transition in transitions:
+        set_state(obj, transition.destination)
+        return True
+    else:
+        return False
+
 def set_state(obj, state):
     """Sets the current state for the passed object and updates the
     permissions for the object.
@@ -169,12 +187,24 @@ def set_state(obj, state):
         sor.save()
     update_permissions(obj)
 
-def get_allowed_transitions(user, obj):
-    """Returns all allowed transitions for passed obj.
-    """
-    workflow = get_workflow(obj)
+def get_allowed_transitions(obj, user):
+    """Returns all allowed transitions for passed object and user. Takes the
+    current state of the object into account.
 
-    transitions = workflow.transitions.all()
+    **Parameters:**
+
+    obj
+        The object for which the transitions should be returned.
+    user
+        The user for which the transitions are allowed.
+    """
+    state = get_state(obj)
+
+    transitions = []
+    for transition in state.transitions.all():
+        transitions.append(transition)
+
+    return transitions
 
 def update_permissions(obj):
     """Updates the permission of the object according to the object's current
@@ -182,12 +212,20 @@ def update_permissions(obj):
     """
     workflow = get_workflow(obj)
     state = get_state(obj)
-    
+
     # Remove all permissions for the workflow
     for group in Group.objects.all():
         for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
             permissions.utils.remove_permission(wpr.permission, group, obj)
-    
-    # Grant permission for the state        
+
+    # Grant permission for the state
     for spr in StatePermissionRelation.objects.filter(state=state):
         permissions.utils.grant_permission(spr.permission, spr.group, obj)
+
+    # Remove all inheritance blocks from the object
+    for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
+        permissions.utils.remove_inheritance_block(wpr.permission, obj)
+    
+    # Add inheritance blocks of this state to the object
+    for sib in StateInheritanceBlock.objects.filter(state=state):
+        permissions.utils.add_inheritance_block(sib.permission, obj)
