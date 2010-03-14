@@ -8,6 +8,11 @@ Documentation
 
 For more documentation please visit: http://packages.python.org/django-workflows/
 
+Code
+====
+
+The code can be found on bitbucket: http://bitbucket.org/diefenbach/django-workflows/
+
 Changes
 =======
 

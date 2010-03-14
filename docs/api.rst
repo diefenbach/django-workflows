@@ -7,14 +7,21 @@ Utils
     django-workflows is in alpha state. Please consider the API as supposed 
     to be changed until it reaches beta state.
 
+Workflow
+--------
 .. autofunction:: workflows.utils.set_workflow
 .. autofunction:: workflows.utils.set_workflow_for_object
 .. autofunction:: workflows.utils.get_workflow_for_model
 
+State
+-----
 .. autofunction:: workflows.utils.get_state
 .. autofunction:: workflows.utils.set_state
 
+Transitions
+-----------
 .. autofunction:: workflows.utils.get_allowed_transitions
+.. autofunction:: workflows.utils.do_transition
 
 =======
 Classes

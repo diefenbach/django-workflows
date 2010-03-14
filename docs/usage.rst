@@ -65,14 +65,14 @@ Add permissions
 
     # Add all permissions which are managed by the workflow
     >>> from workflows.models import WorkflowPermissionRelation
-    >>> wpr = WorkflowPermissionRelation.objects.create(workflow=workflow, permission=view)
-    >>> wpr = WorkflowPermissionRelation.objects.create(workflow=workflow, permission=edit)
+    >>> WorkflowPermissionRelation.objects.create(workflow=workflow, permission=view)
+    >>> WorkflowPermissionRelation.objects.create(workflow=workflow, permission=edit)
 
     # Add permissions for the single states
     >>> from workflows.models import StatePermissionRelation
-    >>> spr = StatePermissionRelation.objects.create(state=public, permission=view, group=owner)
-    >>> spr = StatePermissionRelation.objects.create(state=private, permission=view, group=owner)
-    >>> spr = StatePermissionRelation.objects.create(state=private, permission=edit, group=owner)
+    >>> StatePermissionRelation.objects.create(state=public, permission=view, group=owner)
+    >>> StatePermissionRelation.objects.create(state=private, permission=view, group=owner)
+    >>> StatePermissionRelation.objects.create(state=private, permission=edit, group=owner)
     
     # Assign the workflow to the content object
     >>> from workflows.utils import set_workflow
