@@ -1,4 +1,6 @@
-<select name="transitions">
+{% load i18n %}
+<label>{{ state.name }}</label>
+<select name="transition">
     {% for transition in transitions %}
         <option {% if transition.selected %}selected="selected"{% endif %}
                 value="{{ transition.id }}">
