@@ -1,13 +1,13 @@
 # django imports
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
-from django.db import IntegrityError
 
 # workflows imports
 from workflows.models import StateInheritanceBlock
 from workflows.models import StateObjectRelation
 from workflows.models import StatePermissionRelation
 from workflows.models import Transition
+from workflows.models import Workflow
 from workflows.models import WorkflowModelRelation
 from workflows.models import WorkflowObjectRelation
 from workflows.models import WorkflowPermissionRelation
@@ -15,7 +15,61 @@ from workflows.models import WorkflowPermissionRelation
 # permissions imports
 import permissions.utils
 
-def set_workflow(workflow, ctype_or_obj):
+def remove_workflow(ctype_or_obj):
+    """Removes the workflow from the passed content type or object. After this
+    function has been called the content type or object has no workflow
+    anymore.
+
+    If ctype_or_obj is an object the workflow is removed from the object not
+    from the belonging conten type.
+
+    If ctype_or_obj is an content type the workflow is removed from the
+    content type not from instances of the content type (if they have an own
+    workflow)
+
+    ctype_or_obj
+        The content type or the object to which the passed workflow should be
+        set. Can be either a ContentType instance or any LFC Django model
+        instance.
+    """
+    if isinstance(ctype_or_obj, ContentType):
+        remove_workflow_from_model(ctype_or_obj)
+    else:
+        remove_workflow_from_obj(ctype_or_obj)
+
+def remove_workflow_from_model(ctype):
+    """Removes the workflow from passed content type. After this function has
+    been called the content type has no workflow anymore (the instances might
+    have own ones).
+
+    ctype
+        The content type from which the passed workflow should be removed. 
+        Must be a ContentType instance.
+    """
+    try:
+        wmr = WorkflowModelRelation.objects.get(content_type=ctype_or_obj)
+    except WorkflowModelRelation.DoesNotExist:
+        pass
+    else:
+        wmr.delete()
+
+def remove_workflow_from_obj(obj):
+    """Removes the workflow from the passed object. After this function has
+    been called the object has no *own* workflow anymore (it might have one
+    via its content type).
+
+    obj
+        The object from which the passed workflow should be set. Must be a 
+        Django Model instance.
+    """
+    try:
+        wor = WorkflowObjectRelation.objects.get(content_type=ctype_or_obj)
+    except WorkflowObjectRelation.DoesNotExist:
+        pass
+    else:
+        wor.delete()
+    
+def set_workflow(ctype_or_obj, workflow):
     """Sets the workflow for passed content type or object. See the specific
     methods for more information.
 
@@ -29,11 +83,11 @@ def set_workflow(workflow, ctype_or_obj):
         instance.
     """
     if isinstance(ctype_or_obj, ContentType):
-        return set_workflow_for_model(workflow, ctype_or_obj)
+        return set_workflow_for_model(ctype_or_obj, workflow)
     else:
-        return set_workflow_for_object(workflow, ctype_or_obj)
+        return set_workflow_for_object(ctype_or_obj, workflow)
 
-def set_workflow_for_object(workflow, obj):
+def set_workflow_for_object(obj, workflow):
     """Sets the passed workflow to the passed object.
 
     If the object has already the given workflow nothing happens. Otherwise
@@ -47,6 +101,12 @@ def set_workflow_for_object(workflow, obj):
     obj
         The object which gets the passed workflow.
     """
+    if isinstance(workflow, Workflow) == False:
+        try:
+            workflow = Workflow.objects.get(name=workflow)
+        except Workflow.DoesNotExist:
+            return False
+
     ctype = ContentType.objects.get_for_model(obj)
     try:
         wor = WorkflowObjectRelation.objects.get(content_type=ctype, content_id=obj.id)
@@ -59,7 +119,7 @@ def set_workflow_for_object(workflow, obj):
             wor.save()
             set_state(obj, workflow.initial_state)
 
-def set_workflow_for_model(workflow, ctype):
+def set_workflow_for_model(ctype, workflow):
     """Sets the passed workflow to the passed content type. If the content
     type has already an assigned workflow the workflow is overwritten.
 
@@ -74,6 +134,11 @@ def set_workflow_for_model(workflow, ctype):
         The content type to which the passed workflow should be assigned. Can
         be any Django model instance
     """
+    if isinstance(workflow, Workflow) == False:
+        try:
+            workflow = Workflow.objects.get(name=workflow)
+        except Workflow.DoesNotExist:
+            return False
     try:
         wor = WorkflowModelRelation.objects.get(content_type=ctype)
     except WorkflowModelRelation.DoesNotExist:
@@ -187,6 +252,13 @@ def set_state(obj, state):
         sor.save()
     update_permissions(obj)
 
+def set_initial_state(obj):
+    """Sets the initial state to the passed object.
+    """
+    wf = get_workflow(obj)
+    if wf is not None:
+        set_state(obj, wf.initial_state)
+
 def get_allowed_transitions(obj, user):
     """Returns all allowed transitions for passed object and user. Takes the
     current state of the object into account.
@@ -216,16 +288,16 @@ def update_permissions(obj):
     # Remove all permissions for the workflow
     for group in Group.objects.all():
         for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
-            permissions.utils.remove_permission(wpr.permission, group, obj)
+            permissions.utils.remove_permission(obj, wpr.permission, group)
 
     # Grant permission for the state
     for spr in StatePermissionRelation.objects.filter(state=state):
-        permissions.utils.grant_permission(spr.permission, spr.group, obj)
+        permissions.utils.grant_permission(obj, spr.permission, spr.group)
 
     # Remove all inheritance blocks from the object
     for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
-        permissions.utils.remove_inheritance_block(wpr.permission, obj)
-    
+        permissions.utils.remove_inheritance_block(obj, wpr.permission)
+
     # Add inheritance blocks of this state to the object
     for sib in StateInheritanceBlock.objects.filter(state=state):
-        permissions.utils.add_inheritance_block(sib.permission, obj)
+        permissions.utils.add_inheritance_block(obj, sib.permission)

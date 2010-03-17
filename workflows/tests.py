@@ -100,40 +100,40 @@ class PermissionsTestCase(TestCase):
         sib = StateInheritanceBlock.objects.create(state=self.private, permission=self.edit)
         sib = StateInheritanceBlock.objects.create(state=self.public, permission=self.edit)
 
-        workflows.utils.set_workflow(self.w, self.page_1)
+        workflows.utils.set_workflow(self.page_1, self.w)
 
     def test_set_state(self):
         """
         """
         # Permissions
-        result = permissions.utils.has_permission("edit", self.user, self.page_1)
+        result = permissions.utils.has_permission(self.page_1, "edit", self.user)
         self.assertEqual(result, True)
 
-        result = permissions.utils.has_permission("view", self.user, self.page_1)
+        result = permissions.utils.has_permission(self.page_1, "view", self.user)
         self.assertEqual(result, True)
         
         # Inheritance
-        result = permissions.utils.is_inherited("view", self.page_1)
+        result = permissions.utils.is_inherited(self.page_1, "view")
         self.assertEqual(result, False)
 
-        result = permissions.utils.is_inherited("edit", self.page_1)
+        result = permissions.utils.is_inherited(self.page_1, "edit")
         self.assertEqual(result, False)
         
         # Change state
         workflows.utils.set_state(self.page_1, self.public)
 
         # Permissions        
-        result = permissions.utils.has_permission("edit", self.user, self.page_1)
+        result = permissions.utils.has_permission(self.page_1, "edit", self.user)
         self.assertEqual(result, False)
 
-        result = permissions.utils.has_permission("view", self.user, self.page_1)
+        result = permissions.utils.has_permission(self.page_1, "view", self.user)
         self.assertEqual(result, True)
 
         # Inheritance        
-        result = permissions.utils.is_inherited("view", self.page_1)
+        result = permissions.utils.is_inherited(self.page_1, "view")
         self.assertEqual(result, True)
 
-        result = permissions.utils.is_inherited("edit", self.page_1)
+        result = permissions.utils.is_inherited(self.page_1, "edit")
         self.assertEqual(result, False)
 
     def test_do_transition(self):
@@ -159,14 +159,14 @@ class UtilsTestCase(TestCase):
     def test_workflow(self):
         """
         """
-        workflows.utils.set_workflow(self.w, self.user)
+        workflows.utils.set_workflow(self.user, self.w)
         result = workflows.utils.get_workflow(self.user)
         self.assertEqual(result, self.w)
 
     def test_state(self):
         """
         """
-        workflows.utils.set_workflow(self.w, self.user)
+        workflows.utils.set_workflow(self.user, self.w)
         result = workflows.utils.get_state(self.user)
         self.assertEqual(result, self.w.initial_state)
 
@@ -209,7 +209,7 @@ class RelationsTestCase(TestCase):
         """
         """
         # WorkflowObjectRelation
-        workflows.utils.set_workflow(self.w, self.page_1)
+        workflows.utils.set_workflow(self.page_1, self.w)
         wor = WorkflowObjectRelation.objects.filter()[0]
         self.assertEqual(wor.__unicode__(), "flat page 1 - Standard")
 
@@ -220,7 +220,7 @@ class RelationsTestCase(TestCase):
 
         # WorkflowModelRelation
         ctype = ContentType.objects.get_for_model(self.page_1)
-        workflows.utils.set_workflow(self.w, ctype)
+        workflows.utils.set_workflow(ctype, self.w)
         wmr = WorkflowModelRelation.objects.filter()[0]
         self.assertEqual(wmr.__unicode__(), "flat page - Standard")
 
