@@ -11,12 +11,20 @@ Workflow
 --------
 .. autofunction:: workflows.utils.set_workflow
 .. autofunction:: workflows.utils.set_workflow_for_object
+.. autofunction:: workflows.utils.set_workflow_for_model
+
+.. autofunction:: workflows.utils.remove_workflow
+.. autofunction:: workflows.utils.remove_workflow_for_object
+.. autofunction:: workflows.utils.remove_workflow_for_model
+
+.. autofunction:: workflows.utils.get_workflow
 .. autofunction:: workflows.utils.get_workflow_for_model
 
 State
 -----
 .. autofunction:: workflows.utils.get_state
 .. autofunction:: workflows.utils.set_state
+.. autofunction:: workflows.utils.set_initial_state
 
 Transitions
 -----------
