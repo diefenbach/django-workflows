@@ -15,6 +15,19 @@ from workflows.models import WorkflowPermissionRelation
 # permissions imports
 import permissions.utils
 
+def get_objects_for_workflow(workflow):
+    """Returns all objects which have passed workflow.
+    """
+    if not isinstance(workflow, Workflow):
+        try:
+            workflow = Workflow.objects.get(name=workflow)
+        except Workflow.DoesNotExist:
+            return []
+
+    for wmr in WorkflowModelRelation.objects.filter(workflow=workflow):
+        ctype = wmr.content_type
+        return ctype.model_class().objects.all()
+
 def remove_workflow(ctype_or_obj):
     """Removes the workflow from the passed content type or object. After this
     function has been called the content type or object has no workflow
@@ -43,7 +56,7 @@ def remove_workflow_from_model(ctype):
     have own ones).
 
     ctype
-        The content type from which the passed workflow should be removed. 
+        The content type from which the passed workflow should be removed.
         Must be a ContentType instance.
     """
     try:
@@ -59,7 +72,7 @@ def remove_workflow_from_obj(obj):
     via its content type).
 
     obj
-        The object from which the passed workflow should be set. Must be a 
+        The object from which the passed workflow should be set. Must be a
         Django Model instance.
     """
     try:
@@ -68,7 +81,7 @@ def remove_workflow_from_obj(obj):
         pass
     else:
         wor.delete()
-    
+
 def set_workflow(ctype_or_obj, workflow):
     """Sets the workflow for passed content type or object. See the specific
     methods for more information.
