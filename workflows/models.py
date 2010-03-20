@@ -11,6 +11,22 @@ from django.utils.translation import ugettext_lazy as _
 # permissions imports
 from permissions.models import Permission
 
+# workflows imports
+import workflows.utils
+
+class WorkflowBase(object):
+    """Mixin base class for workflows aware classes.
+    """
+    def get_state(self):
+        """Returns the current workflow state of the object.
+        """
+        return workflows.utils.get_state(self)
+
+    def set_state(self, state):
+        """Sets the workflow state of the object.
+        """
+        return workflows.utils.set_state(self, state)
+
 class Workflow(models.Model):
     """A workflow consists of a sequence of connected (through transitions)
     states. It can be assigned to a model and / or model instances.
