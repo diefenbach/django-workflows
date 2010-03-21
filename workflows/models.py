@@ -4,8 +4,6 @@ from django.db import models
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import User
-from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 # permissions imports
@@ -15,8 +13,39 @@ from permissions.models import Permission
 import workflows.utils
 
 class WorkflowBase(object):
-    """Mixin base class for workflows aware classes.
+    """Mixin class to make objects workflow aware.
     """
+    def get_workflow(self):
+        """Returns the current workflow of the object.
+        """
+        return workflows.utils.get_workflow(self)
+
+    def remove_workflow(self):
+        """Removes the workflow from the object. After this function has been
+        called the object has no *own* workflow anymore (it might have one via
+        its content type).
+
+        """
+        return workflows.utils.remove_workflow_from_object(self)
+
+    def set_workflow(self, workflow):
+        """Sets the passed workflow to the object. This will set the local
+        workflow for the object.
+
+        If the object has already the given workflow nothing happens.
+        Otherwise the object gets the passed workflow and the state is set to
+        the workflow's initial state.
+
+        **Parameters:**
+
+        workflow
+            The workflow which should be set to the object. Can be a Workflow
+            instance or a string with the workflow name.
+        obj
+            The object which gets the passed workflow.
+        """
+        return workflows.utils.set_workflow_for_object(workflow)
+
     def get_state(self):
         """Returns the current workflow state of the object.
         """
@@ -27,14 +56,31 @@ class WorkflowBase(object):
         """
         return workflows.utils.set_state(self, state)
 
+    def set_initial_state(self):
+        """Sets the initial state of the current workflow to the object.
+        """
+        return self.set_state(self.get_workflow().initial_state)
+
+    def get_allowed_transitions(self, user):
+        """Returns allowed transitions for the current state.
+        """
+        return workflows.utils.get_allowed_transitions(self, user)
+
+    def do_transition(self, transition):
+        """Processes the passed transition (if allowed).
+        """
+        return workflows.utils.do_transition(self, transition)
+
 class Workflow(models.Model):
     """A workflow consists of a sequence of connected (through transitions)
-    states. It can be assigned to a model and / or model instances.
+    states. It can be assigned to a model and / or model instances. If a
+    model instance has worklflow it takes precendence over the model's
+    workflow.
 
     **Attributes:**
 
     model
-        The model the workflow belongs to. Can be any 
+        The model the workflow belongs to. Can be any
 
     content
         The object the workflow belongs to.
@@ -54,6 +100,85 @@ class Workflow(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def get_objects(self):
+        """Returns all objects which have this workflow assigned. Globally
+        (via the object's content type) or locally (via the object itself).
+        """
+        objs = []
+
+        # Get all objects whose content type has this workflow
+        for wmr in WorkflowModelRelation.objects.filter(workflow=self):
+            ctype = wmr.content_type
+            # We have also to check whether the global workflow is not
+            # overwritten.
+            for obj in ctype.model_class().objects.all():
+                if workflows.utils.get_workflow(obj) == self:
+                    objs.append(obj)
+
+        # Get all objects whose local workflow this workflow
+        for wor in WorkflowObjectRelation.objects.filter(workflow=self):
+            if wor.content not in objs:
+                objs.append(wor.content)
+
+        return objs
+
+    def set_to(self, ctype_or_obj):
+        """Sets the workflow to passed content type or object. See the specific
+        methods for more information.
+
+        **Parameters:**
+
+        ctype_or_obj
+            The content type or the object to which the workflow should be set.
+            Can be either a ContentType instance or any Django model instance.
+        """
+        if isinstance(ctype_or_obj, ContentType):
+            return self.set_to_model(ctype_or_obj)
+        else:
+            return self.set_to_object(ctype_or_obj)
+
+    def set_to_model(self, ctype):
+        """Sets the workflow to the passed content type. If the content
+        type has already an assigned workflow the workflow is overwritten.
+
+        **Parameters:**
+
+        ctype
+            The content type which gets the workflow. Can be any Django model
+            instance.
+        """
+        try:
+            wor = WorkflowModelRelation.objects.get(content_type=ctype)
+        except WorkflowModelRelation.DoesNotExist:
+            WorkflowModelRelation.objects.create(content_type=ctype, workflow=self)
+        else:
+            wor.workflow = self
+            wor.save()
+
+    def set_to_object(self, obj):
+        """Sets the workflow to the passed object.
+
+        If the object has already the given workflow nothing happens. Otherwise
+        the workflow is set to the objectthe state is set to the workflow's
+        initial state.
+
+        **Parameters:**
+
+        obj
+            The object which gets the workflow.
+        """
+        ctype = ContentType.objects.get_for_model(obj)
+        try:
+            wor = WorkflowObjectRelation.objects.get(content_type=ctype, content_id=obj.id)
+        except WorkflowObjectRelation.DoesNotExist:
+            WorkflowObjectRelation.objects.create(content = obj, workflow=self)
+            workflows.utils.set_state(obj, self.initial_state)
+        else:
+            if wor.workflow != self:
+                wor.workflow = self
+                wor.save()
+                workflows.utils.set_state(self.initial_state)
 
 class State(models.Model):
     """A certain state within workflow.
@@ -92,15 +217,15 @@ class Transition(models.Model):
         The unique name of the transition within a workflow.
 
     workflow
-        The workflow to which the transition belongs. Must be a Workflow 
+        The workflow to which the transition belongs. Must be a Workflow
         instance.
 
     destination
-        The state after a transition has been processed. Must be a State 
+        The state after a transition has been processed. Must be a State
         instance.
 
     condition
-        The condition when the transition is available. Can be any python 
+        The condition when the transition is available. Can be any python
         expression.
 
     permission
@@ -220,7 +345,7 @@ class StateInheritanceBlock(models.Model):
 
     def __unicode__(self):
         return "%s %s" % (self.state.name, self.permission.name)
-    
+
 class StatePermissionRelation(models.Model):
     """Stores granted permission for state and group.
 

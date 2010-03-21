@@ -111,25 +111,25 @@ class PermissionsTestCase(TestCase):
 
         result = permissions.utils.has_permission(self.page_1, "view", self.user)
         self.assertEqual(result, True)
-        
+
         # Inheritance
         result = permissions.utils.is_inherited(self.page_1, "view")
         self.assertEqual(result, False)
 
         result = permissions.utils.is_inherited(self.page_1, "edit")
         self.assertEqual(result, False)
-        
+
         # Change state
         workflows.utils.set_state(self.page_1, self.public)
 
-        # Permissions        
+        # Permissions
         result = permissions.utils.has_permission(self.page_1, "edit", self.user)
         self.assertEqual(result, False)
 
         result = permissions.utils.has_permission(self.page_1, "view", self.user)
         self.assertEqual(result, True)
 
-        # Inheritance        
+        # Inheritance
         result = permissions.utils.is_inherited(self.page_1, "view")
         self.assertEqual(result, True)
 
@@ -169,6 +169,42 @@ class UtilsTestCase(TestCase):
         workflows.utils.set_workflow(self.user, self.w)
         result = workflows.utils.get_state(self.user)
         self.assertEqual(result, self.w.initial_state)
+
+    def test_get_objects_for_workflow_1(self):
+        """Workflow is added to object.
+        """
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [])
+
+        workflows.utils.set_workflow(self.user, self.w)
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [self.user])
+
+    def test_get_objects_for_workflow_2(self):
+        """Workflow is added to content type.
+        """
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [])
+        
+        ctype = ContentType.objects.get_for_model(self.user)
+        workflows.utils.set_workflow(ctype, self.w)
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [self.user])
+
+    def test_get_objects_for_workflow_3(self):
+        """Workflow is added to content type and object.
+        """
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [])
+
+        workflows.utils.set_workflow(self.user, self.w)
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [self.user])
+        
+        ctype = ContentType.objects.get_for_model(self.user)
+        workflows.utils.set_workflow(ctype, self.w)
+        result = workflows.utils.get_objects_for_workflow(self.w)
+        self.assertEqual(result, [self.user])
 
 class StateTestCase(TestCase):
     """Tests the State model
