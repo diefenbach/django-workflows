@@ -60,7 +60,7 @@ def remove_workflow_from_model(ctype):
         Must be a ContentType instance.
     """
     try:
-        wmr = WorkflowModelRelation.objects.get(content_type=ctype_or_obj)
+        wmr = WorkflowModelRelation.objects.get(content_type=ctype)
     except WorkflowModelRelation.DoesNotExist:
         pass
     else:
