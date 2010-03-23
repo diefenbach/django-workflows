@@ -66,10 +66,10 @@ class WorkflowBase(object):
         """
         return workflows.utils.get_allowed_transitions(self, user)
 
-    def do_transition(self, transition):
+    def do_transition(self, transition, user):
         """Processes the passed transition (if allowed).
         """
-        return workflows.utils.do_transition(self, transition)
+        return workflows.utils.do_transition(self, transition, user)
 
 class Workflow(models.Model):
     """A workflow consists of a sequence of connected (through transitions)
