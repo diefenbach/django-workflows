@@ -71,13 +71,12 @@ class PermissionsTestCase(TestCase):
         """
         create_workflow(self)
 
-        # Register groups
-        self.anonymous = permissions.utils.register_group("Anonymous")
-        self.owner = permissions.utils.register_group("Owner")
+        # Register roles
+        self.anonymous = permissions.utils.register_role("Anonymous")
+        self.owner = permissions.utils.register_role("Owner")
 
         self.user = User.objects.create(username="john")
-        self.user.groups.add(self.owner)
-        self.user.save()
+        permissions.utils.add_role(self.user, self.owner)
 
         # Example content type
         self.page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
@@ -91,9 +90,9 @@ class PermissionsTestCase(TestCase):
         wpr = WorkflowPermissionRelation.objects.create(workflow=self.w, permission=self.edit)
 
         # Add permissions for single states
-        spr = StatePermissionRelation.objects.create(state=self.public, permission=self.view, group=self.owner)
-        spr = StatePermissionRelation.objects.create(state=self.private, permission=self.view, group=self.owner)
-        spr = StatePermissionRelation.objects.create(state=self.private, permission=self.edit, group=self.owner)
+        spr = StatePermissionRelation.objects.create(state=self.public, permission=self.view, role=self.owner)
+        spr = StatePermissionRelation.objects.create(state=self.private, permission=self.view, role=self.owner)
+        spr = StatePermissionRelation.objects.create(state=self.private, permission=self.edit, role=self.owner)
 
         # Add inheritance block for single states
         sib = StateInheritanceBlock.objects.create(state=self.private, permission=self.view)
@@ -266,8 +265,8 @@ class RelationsTestCase(TestCase):
         self.assertEqual(wpr.__unicode__(), "Standard View")
 
         # StatePermissionRelation
-        self.owner = permissions.utils.register_group("Owner")
-        spr = StatePermissionRelation.objects.create(state=self.public, permission=self.view, group=self.owner)
+        self.owner = permissions.utils.register_role("Owner")
+        spr = StatePermissionRelation.objects.create(state=self.public, permission=self.view, role=self.owner)
         self.assertEqual(spr.__unicode__(), "Public Owner View")
 
 # Helpers ####################################################################

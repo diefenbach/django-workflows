@@ -1,5 +1,4 @@
 # django imports
-from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 
 # workflows imports
@@ -14,6 +13,7 @@ from workflows.models import WorkflowPermissionRelation
 
 # permissions imports
 import permissions.utils
+from permissions.models import Role
 
 def get_objects_for_workflow(workflow):
     """Returns all objects which have passed workflow.
@@ -309,13 +309,13 @@ def update_permissions(obj):
     state = get_state(obj)
 
     # Remove all permissions for the workflow
-    for group in Group.objects.all():
+    for role in Role.objects.all():
         for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
-            permissions.utils.remove_permission(obj, wpr.permission, group)
+            permissions.utils.remove_permission(obj, wpr.permission, role)
 
     # Grant permission for the state
     for spr in StatePermissionRelation.objects.filter(state=state):
-        permissions.utils.grant_permission(obj, spr.permission, spr.group)
+        permissions.utils.grant_permission(obj, spr.permission, spr.role)
 
     # Remove all inheritance blocks from the object
     for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):

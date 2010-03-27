@@ -1,13 +1,13 @@
 from django.db import models
 
 # django imports
-from django.contrib.auth.models import Group
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
 # permissions imports
 from permissions.models import Permission
+from permissions.models import Role
 
 # workflows imports
 import workflows.utils
@@ -318,6 +318,7 @@ class WorkflowPermissionRelation(models.Model):
     workflow
         The workflow which is responsible for the permissions. Needs to be a
         Workflow instance.
+
     permission
         The permission for which the workflow is responsible. Needs to be a
         Permission instance.
@@ -336,6 +337,7 @@ class StateInheritanceBlock(models.Model):
     state
         The state for which the inheritance is blocked. Needs to be a State
         instance.
+
     permission
         The permission for which the instance is blocked. Needs to be a
         Permission instance.
@@ -347,23 +349,25 @@ class StateInheritanceBlock(models.Model):
         return "%s %s" % (self.state.name, self.permission.name)
 
 class StatePermissionRelation(models.Model):
-    """Stores granted permission for state and group.
+    """Stores granted permission for state and role.
 
     **Attributes:**
 
     state
-        The state for which the group has the permission. Needs to be a State
+        The state for which the role has the permission. Needs to be a State
         instance.
+
     permission
         The permission for which the workflow is responsible. Needs to be a
         Permission instance.
-    group
-        The group for which the state has the permission. Needs to be a Django
-        Group instance.
+
+    role
+        The role for which the state has the permission. Needs to be a lfc
+        Role instance.
     """
     state = models.ForeignKey(State, verbose_name=_(u"State"))
     permission = models.ForeignKey(Permission, verbose_name=_(u"Permission"))
-    group = models.ForeignKey(Group, verbose_name=_(u"Group"))
+    role = models.ForeignKey(Role, verbose_name=_(u"Role"))
 
     def __unicode__(self):
-        return "%s %s %s" % (self.state.name, self.group.name, self.permission.name)
+        return "%s %s %s" % (self.state.name, self.role.name, self.permission.name)
