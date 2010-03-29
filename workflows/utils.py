@@ -311,11 +311,11 @@ def update_permissions(obj):
     # Remove all permissions for the workflow
     for role in Role.objects.all():
         for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
-            permissions.utils.remove_permission(obj, wpr.permission, role)
+            permissions.utils.remove_permission(obj, role, wpr.permission)
 
     # Grant permission for the state
     for spr in StatePermissionRelation.objects.filter(state=state):
-        permissions.utils.grant_permission(obj, spr.permission, spr.role)
+        permissions.utils.grant_permission(obj, spr.role, spr.permission)
 
     # Remove all inheritance blocks from the object
     for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):

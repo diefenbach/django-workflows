@@ -105,10 +105,10 @@ class PermissionsTestCase(TestCase):
         """
         """
         # Permissions
-        result = permissions.utils.has_permission(self.page_1, "edit", self.user)
+        result = permissions.utils.has_permission(self.page_1, self.user, "edit")
         self.assertEqual(result, True)
 
-        result = permissions.utils.has_permission(self.page_1, "view", self.user)
+        result = permissions.utils.has_permission(self.page_1, self.user, "view")
         self.assertEqual(result, True)
 
         # Inheritance
@@ -122,10 +122,10 @@ class PermissionsTestCase(TestCase):
         workflows.utils.set_state(self.page_1, self.public)
 
         # Permissions
-        result = permissions.utils.has_permission(self.page_1, "edit", self.user)
+        result = permissions.utils.has_permission(self.page_1, self.user, "edit")
         self.assertEqual(result, False)
 
-        result = permissions.utils.has_permission(self.page_1, "view", self.user)
+        result = permissions.utils.has_permission(self.page_1, self.user, "view")
         self.assertEqual(result, True)
 
         # Inheritance
