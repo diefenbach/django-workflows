@@ -115,6 +115,7 @@ def set_workflow(ctype_or_obj, workflow):
 
     workflow
         The workflow which should be set to the object or model.
+
     ctype_or_obj
         The content type or the object to which the passed workflow should be
         set. Can be either a ContentType instance or any Django model
@@ -134,6 +135,7 @@ def set_workflow_for_object(obj, workflow):
     workflow
         The workflow which should be set to the object. Can be a Workflow
         instance or a string with the workflow name.
+
     obj
         The object which gets the passed workflow.
     """
@@ -142,7 +144,7 @@ def set_workflow_for_object(obj, workflow):
             workflow = Workflow.objects.get(name=workflow)
         except Workflow.DoesNotExist:
             return False
-    
+
     workflow.set_to_object(obj)
 
 def set_workflow_for_model(ctype, workflow):
@@ -156,6 +158,7 @@ def set_workflow_for_model(ctype, workflow):
     workflow
         The workflow which should be set to passend content type. Must be a
         Workflow instance.
+
     ctype
         The content type to which the passed workflow should be assigned. Can
         be any Django model instance
@@ -179,14 +182,14 @@ def get_workflow(obj):
         The object for which the workflow should be returend. Can be any
         Django model instance.
     """
-    workflow = get_workflow_for_obj(obj)
+    workflow = get_workflow_for_object(obj)
     if workflow is not None:
         return workflow
 
     ctype = ContentType.objects.get_for_model(obj)
     return get_workflow_for_model(ctype)
 
-def get_workflow_for_obj(obj):
+def get_workflow_for_object(obj):
     """Returns the workflow for the passed object.
 
     **Parameters:**
@@ -252,14 +255,15 @@ def do_transition(obj, transition, user):
         return False
 
 def set_state(obj, state):
-    """Sets the current state for the passed object and updates the
-    permissions for the object.
+    """Sets the state for the passed object to the passed state and updates 
+    the permissions for the object.
 
     **Parameters:**
 
     obj
         The object for which the workflow state should be set. Can be any
         Django model instance.
+
     state
         The state which should be set to the passed object.
     """
@@ -288,6 +292,7 @@ def get_allowed_transitions(obj, user):
 
     obj
         The object for which the transitions should be returned.
+
     user
         The user for which the transitions are allowed.
     """
@@ -302,8 +307,8 @@ def get_allowed_transitions(obj, user):
     return transitions
 
 def update_permissions(obj):
-    """Updates the permission of the object according to the object's current
-       workflow state.
+    """Updates the permissions of the passed object according to the object's 
+    current workflow state.
     """
     workflow = get_workflow(obj)
     state = get_state(obj)

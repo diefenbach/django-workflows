@@ -338,7 +338,7 @@ class UtilsTestCase(TestCase):
         result = workflows.utils.get_workflow_for_model(ctype)
         self.assertEqual(result, None)
 
-        result = workflows.utils.get_workflow_for_obj(self.user)
+        result = workflows.utils.get_workflow_for_object(self.user)
         self.assertEqual(result, None)
 
     def test_remove_workflow_from_object(self):
@@ -376,7 +376,7 @@ class UtilsTestCase(TestCase):
         result = workflows.utils.get_workflow_for_model(ctype)
         self.assertEqual(result, None)
 
-        result = workflows.utils.get_workflow_for_obj(self.user)
+        result = workflows.utils.get_workflow_for_object(self.user)
         self.assertEqual(result, None)
 
     def test_remove_workflow_2(self):
