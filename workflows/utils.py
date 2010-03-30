@@ -238,24 +238,8 @@ def get_state(obj):
     else:
         return sor.state
 
-def do_transition(obj, transition, user):
-    """Processes the passed transition to the passed object (if allowed).
-    """
-    if not isinstance(transition, Transition):
-        try:
-            transition = Transition.objects.get(name=transition)
-        except Transition.DoesNotExist:
-            return False
-
-    transitions = get_allowed_transitions(obj, user)
-    if transition in transitions:
-        set_state(obj, transition.destination)
-        return True
-    else:
-        return False
-
 def set_state(obj, state):
-    """Sets the state for the passed object to the passed state and updates 
+    """Sets the state for the passed object to the passed state and updates
     the permissions for the object.
 
     **Parameters:**
@@ -306,8 +290,24 @@ def get_allowed_transitions(obj, user):
 
     return transitions
 
+def do_transition(obj, transition, user):
+    """Processes the passed transition to the passed object (if allowed).
+    """
+    if not isinstance(transition, Transition):
+        try:
+            transition = Transition.objects.get(name=transition)
+        except Transition.DoesNotExist:
+            return False
+
+    transitions = get_allowed_transitions(obj, user)
+    if transition in transitions:
+        set_state(obj, transition.destination)
+        return True
+    else:
+        return False
+
 def update_permissions(obj):
-    """Updates the permissions of the passed object according to the object's 
+    """Updates the permissions of the passed object according to the object's
     current workflow state.
     """
     workflow = get_workflow(obj)

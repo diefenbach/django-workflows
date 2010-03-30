@@ -42,17 +42,16 @@ Add permissions
 
 .. code-block:: python
 
-    # Add a group
-    >>> from django.contrib.auth.models import Group
-    >>> from permissions.utils import register_group
-    >>> owner = register_group("Owner")
+    # Add a role
+    >>> from permissions.utils import register_role
+    >>> owner = register_role("Owner")
 
     # Create a user
     >>> from django.contrib.auth.models import User
     >>> user = User.objects.create(username="john")
 
-    # Assign user to group
-    >>> user.groups.add(owner)
+    # Assign user to role
+    >>> owner.add_principal(user)
 
     # Create example content type
     >>> from django.contrib.flatpages.models import FlatPage
@@ -70,20 +69,21 @@ Add permissions
 
     # Add permissions for the single states
     >>> from workflows.models import StatePermissionRelation
-    >>> StatePermissionRelation.objects.create(state=public, permission=view, group=owner)
-    >>> StatePermissionRelation.objects.create(state=private, permission=view, group=owner)
-    >>> StatePermissionRelation.objects.create(state=private, permission=edit, group=owner)
+    >>> StatePermissionRelation.objects.create(state=public, permission=view, role=owner)
+    >>> StatePermissionRelation.objects.create(state=private, permission=view, role=owner)
+    >>> StatePermissionRelation.objects.create(state=private, permission=edit, role=owner)
     
     # Assign the workflow to the content object
     >>> from workflows.utils import set_workflow
-    >>> set_workflow(workflow, page_1)
+    >>> set_workflow(page_1, workflow)
 
     # Now self.page_1 has the intial workflow state.
     >>> from permissions.utils import has_permission
-    >>> has_permission("edit", user, page_1)
+    >>> has_permission(page_1, user, "edit")
     True
     
     # Now we change the workflow state
-    >>> set_state(self.page_1, self.public)
-    >>> has_permission("edit", user, page_1)
+    >>> from workflows.utils import set_state
+    >>> set_state(page_1, public)
+    >>> has_permission(page_1, user, "edit")
     False

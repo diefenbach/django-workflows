@@ -14,10 +14,11 @@ Workflow
 .. autofunction:: workflows.utils.set_workflow_for_model
 
 .. autofunction:: workflows.utils.remove_workflow
-.. autofunction:: workflows.utils.remove_workflow_for_object
-.. autofunction:: workflows.utils.remove_workflow_for_model
+.. autofunction:: workflows.utils.remove_workflow_from_object
+.. autofunction:: workflows.utils.remove_workflow_from_model
 
 .. autofunction:: workflows.utils.get_workflow
+.. autofunction:: workflows.utils.get_workflow_for_object
 .. autofunction:: workflows.utils.get_workflow_for_model
 
 .. autofunction:: workflows.utils.get_objects_for_workflow
