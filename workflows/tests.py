@@ -135,16 +135,47 @@ class PermissionsTestCase(TestCase):
         result = permissions.utils.is_inherited(self.page_1, "edit")
         self.assertEqual(result, False)
 
-    def test_do_transition(self):
+    def test_set_initial_state(self):
         """
         """
         state = workflows.utils.get_state(self.page_1)
         self.assertEqual(state.name, self.private.name)
 
         workflows.utils.do_transition(self.page_1, self.make_public, self.user)
+        state = workflows.utils.get_state(self.page_1)
+        self.assertEqual(state.name, self.public.name)
+
+        workflows.utils.set_initial_state(self.page_1)
+        state = workflows.utils.get_state(self.page_1)
+        self.assertEqual(state.name, self.private.name)
+
+    def test_do_transition(self):
+        """
+        """
+        state = workflows.utils.get_state(self.page_1)
+        self.assertEqual(state.name, self.private.name)
+
+        # by transition
+        workflows.utils.do_transition(self.page_1, self.make_public, self.user)
 
         state = workflows.utils.get_state(self.page_1)
         self.assertEqual(state.name, self.public.name)
+
+        # by name
+        workflows.utils.do_transition(self.page_1, "Make private", self.user)
+
+        state = workflows.utils.get_state(self.page_1)
+        self.assertEqual(state.name, self.private.name)
+
+        # name which does not exist
+        result = workflows.utils.do_transition(self.page_1, "Make pending", self.user)
+        self.assertEqual(result, False)
+
+        wrong = Transition.objects.create(name="Wrong", workflow=self.w, destination = self.public)
+
+        # name which does not exist
+        result = workflows.utils.do_transition(self.page_1, wrong, self.user)
+        self.assertEqual(result, False)
 
 class UtilsTestCase(TestCase):
     """Tests various methods of the utils module.
@@ -165,9 +196,75 @@ class UtilsTestCase(TestCase):
     def test_state(self):
         """
         """
+        result = workflows.utils.get_state(self.user)
+        self.assertEqual(result, None)
+
         workflows.utils.set_workflow(self.user, self.w)
         result = workflows.utils.get_state(self.user)
         self.assertEqual(result, self.w.initial_state)
+
+    def test_set_workflow_1(self):
+        """Set worklow by object
+        """
+        ctype = ContentType.objects.get_for_model(self.user)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, None)
+
+        wp = Workflow.objects.create(name="Portal")
+
+        # Set for model
+        workflows.utils.set_workflow_for_model(ctype, wp)
+
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, wp)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, wp)
+
+        # Set for object
+        workflows.utils.set_workflow_for_object(self.user, self.w)
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, self.w)
+
+        # The model still have wp
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, wp)
+
+    def test_set_workflow_2(self):
+        """Set worklow by name
+        """
+        ctype = ContentType.objects.get_for_model(self.user)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, None)
+
+        wp = Workflow.objects.create(name="Portal")
+
+        # Set for model
+        workflows.utils.set_workflow_for_model(ctype, "Portal")
+
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, wp)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, wp)
+
+        # Set for object
+        workflows.utils.set_workflow_for_object(self.user, "Standard")
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, self.w)
+
+        # The model still have wp
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, wp)
+
+        # Workflow which does not exist
+        result = workflows.utils.set_workflow_for_model(ctype, "Wrong")
+        self.assertEqual(result, False)
+
+        result = workflows.utils.set_workflow_for_object(self.user, "Wrong")
+        self.assertEqual(result, False)
 
     def test_get_objects_for_workflow_1(self):
         """Workflow is added to object.
@@ -184,7 +281,7 @@ class UtilsTestCase(TestCase):
         """
         result = workflows.utils.get_objects_for_workflow(self.w)
         self.assertEqual(result, [])
-        
+
         ctype = ContentType.objects.get_for_model(self.user)
         workflows.utils.set_workflow(ctype, self.w)
         result = workflows.utils.get_objects_for_workflow(self.w)
@@ -199,11 +296,102 @@ class UtilsTestCase(TestCase):
         workflows.utils.set_workflow(self.user, self.w)
         result = workflows.utils.get_objects_for_workflow(self.w)
         self.assertEqual(result, [self.user])
-        
+
         ctype = ContentType.objects.get_for_model(self.user)
         workflows.utils.set_workflow(ctype, self.w)
         result = workflows.utils.get_objects_for_workflow(self.w)
         self.assertEqual(result, [self.user])
+
+    def test_get_objects_for_workflow_4(self):
+        """Get workflow by name
+        """
+        result = workflows.utils.get_objects_for_workflow("Standard")
+        self.assertEqual(result, [])
+
+        workflows.utils.set_workflow(self.user, self.w)
+        result = workflows.utils.get_objects_for_workflow("Standard")
+        self.assertEqual(result, [self.user])
+
+        # Workflow which does not exist
+        result = workflows.utils.get_objects_for_workflow("Wrong")
+        self.assertEqual(result, [])
+
+
+    def test_remove_workflow_from_model(self):
+        """
+        """
+        ctype = ContentType.objects.get_for_model(self.user)
+
+        result = workflows.utils.get_workflow(ctype)
+        self.assertEqual(result, None)
+
+        workflows.utils.set_workflow_for_model(ctype, self.w)
+
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, self.w)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, self.w)
+
+        workflows.utils.remove_workflow_from_model(ctype)
+
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, None)
+
+        result = workflows.utils.get_workflow_for_obj(self.user)
+        self.assertEqual(result, None)
+
+    def test_remove_workflow_from_object(self):
+        """
+        """
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, None)
+
+        workflows.utils.set_workflow_for_object(self.user, self.w)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, self.w)
+
+        result = workflows.utils.remove_workflow_from_object(self.user)
+        self.assertEqual(result, None)
+
+    def test_remove_workflow_1(self):
+        """Removes workflow from model
+        """
+        ctype = ContentType.objects.get_for_model(self.user)
+
+        result = workflows.utils.get_workflow(ctype)
+        self.assertEqual(result, None)
+
+        workflows.utils.set_workflow_for_model(ctype, self.w)
+
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, self.w)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, self.w)
+
+        workflows.utils.remove_workflow(ctype)
+
+        result = workflows.utils.get_workflow_for_model(ctype)
+        self.assertEqual(result, None)
+
+        result = workflows.utils.get_workflow_for_obj(self.user)
+        self.assertEqual(result, None)
+
+    def test_remove_workflow_2(self):
+        """Removes workflow from object
+        """
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, None)
+
+        workflows.utils.set_workflow_for_object(self.user, self.w)
+
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, self.w)
+
+        result = workflows.utils.remove_workflow(self.user)
+        self.assertEqual(result, None)
 
 class StateTestCase(TestCase):
     """Tests the State model
