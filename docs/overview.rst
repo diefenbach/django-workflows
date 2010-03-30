@@ -9,8 +9,8 @@ django-workflows comes with `django-permissions
 <http://packages.python.org/django-permissions/>`_, which is a per-object 
 permission framework for Django.
 
-Every object can have specific permissions for specific groups. Every user 
-has all permissions from the groups he is member of.
+Every object can have specific permissions for specific roles. Every user 
+has all permissions from the roles he has.
 
 See `django-permissions <http://packages.python.org/django-permissions/>`_
 for more.
