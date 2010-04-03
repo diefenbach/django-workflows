@@ -3,7 +3,7 @@ Overview
 ========
 
 Permissions
------------
+===========
 
 django-workflows comes with `django-permissions 
 <http://packages.python.org/django-permissions/>`_, which is a per-object 
@@ -16,7 +16,7 @@ See `django-permissions <http://packages.python.org/django-permissions/>`_
 for more.
 
 Workflows
----------
+=========
 
 A workflow consists of a sequence of connected (through transitions) states. 
 The transitions can be restricted by permissions.
