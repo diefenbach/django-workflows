@@ -74,7 +74,7 @@ class WorkflowBase(object):
 class Workflow(models.Model):
     """A workflow consists of a sequence of connected (through transitions)
     states. It can be assigned to a model and / or model instances. If a
-    model instance has worklflow it takes precendence over the model's
+    model instance has a workflow it takes precendence over the model's
     workflow.
 
     **Attributes:**
@@ -97,9 +97,22 @@ class Workflow(models.Model):
     """
     name = models.CharField(_(u"Name"), max_length=100, unique=True)
     initial_state = models.ForeignKey("State", related_name="workflow_state", blank=True, null=True)
+    permissions = models.ManyToManyField(Permission, symmetrical=False, through="WorkflowPermissionRelation")
 
     def __unicode__(self):
         return self.name
+
+    def get_initial_state(self):
+        """Returns the initial state of the workflow. Takes the first one if
+        no state has been defined.
+        """
+        if self.initial_state:
+            return self.initial_state
+        else:
+            try:
+                return self.states.all()[0]
+            except IndexError:
+                return None
 
     def get_objects(self):
         """Returns all objects which have this workflow assigned. Globally
@@ -199,8 +212,11 @@ class State(models.Model):
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="states")
     transitions = models.ManyToManyField("Transition", verbose_name=_(u"Transitions"), blank=True, null=True, related_name="states")
 
+    class Meta:
+        ordering = ("name", )
+
     def __unicode__(self):
-        return self.name
+        return "%s (%s)" % (self.name, self.workflow.name)
 
     def get_allowed_transitions(self, user):
         """Returns all allowed transitions for given user.
@@ -234,8 +250,8 @@ class Transition(models.Model):
 
     """
     name = models.CharField(_(u"Name"), max_length=100)
-    workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"))
-    destination = models.ForeignKey(State, verbose_name=_(u"Destination"), related_name="destination_state")
+    workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="transitions")
+    destination = models.ForeignKey(State, verbose_name=_(u"Destination"), null=True, blank=True, related_name="destination_state")
     condition = models.CharField(_(u"Condition"), blank=True, max_length=100)
     permission = models.ForeignKey(Permission, verbose_name=_(u"Permission"), blank=True, null=True)
 
@@ -244,6 +260,9 @@ class Transition(models.Model):
 
 class StateObjectRelation(models.Model):
     """Stores the workflow state of an object.
+
+    Provides a way to give any object a workflow state without changing the
+    object's model.
 
     **Attributes:**
 
@@ -267,6 +286,9 @@ class StateObjectRelation(models.Model):
 
 class WorkflowObjectRelation(models.Model):
     """Stores an workflow of an object.
+    
+    Provides a way to give any object a workflow without changing the object's 
+    model.
 
     **Attributes:**
 
@@ -281,7 +303,7 @@ class WorkflowObjectRelation(models.Model):
     content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content type"), related_name="workflow_object", blank=True, null=True)
     content_id = models.PositiveIntegerField(_(u"Content id"), blank=True, null=True)
     content = generic.GenericForeignKey(ct_field="content_type", fk_field="content_id")
-    workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"))
+    workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="wors")
 
     class Meta:
         unique_together = ("content_type", "content_id")
@@ -291,6 +313,8 @@ class WorkflowObjectRelation(models.Model):
 
 class WorkflowModelRelation(models.Model):
     """Stores an workflow for a model (ContentType).
+
+    Provides a way to give any object a workflow without changing the model.
 
     **Attributes:**
 
@@ -303,7 +327,7 @@ class WorkflowModelRelation(models.Model):
         workflow instance.
     """
     content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content Type"), unique=True)
-    workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"))
+    workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="wmrs")
 
     def __unicode__(self):
         return "%s - %s" % (self.content_type.name, self.workflow.name)
@@ -325,6 +349,9 @@ class WorkflowPermissionRelation(models.Model):
     """
     workflow = models.ForeignKey(Workflow)
     permission = models.ForeignKey(Permission)
+
+    class Meta:
+        unique_together = ("workflow", "permission")
 
     def __unicode__(self):
         return "%s %s" % (self.workflow.name, self.permission.name)

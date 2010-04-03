@@ -266,7 +266,7 @@ def set_initial_state(obj):
     """
     wf = get_workflow(obj)
     if wf is not None:
-        set_state(obj, wf.initial_state)
+        set_state(obj, wf.get_initial_state())
 
 def get_allowed_transitions(obj, user):
     """Returns all allowed transitions for passed object and user. Takes the

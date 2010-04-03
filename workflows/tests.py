@@ -471,7 +471,7 @@ def create_workflow(self):
     self.private.transitions.add(self.make_public)
     self.public.transitions.add(self.make_private)
 
-    self.w.initial_state = self.private
+    self.w.get_initial_state() = self.private
     self.w.save()
 
 # Taken from "http://www.djangosnippets.org/snippets/963/"
