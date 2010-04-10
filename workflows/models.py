@@ -289,7 +289,7 @@ class WorkflowPermissionRelation(models.Model):
         Permission instance.
     """
     workflow = models.ForeignKey(Workflow)
-    permission = models.ForeignKey(Permission)
+    permission = models.ForeignKey(Permission, related_name="permissions")
 
     class Meta:
         unique_together = ("workflow", "permission")
