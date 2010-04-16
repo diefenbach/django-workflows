@@ -1,2 +1,3 @@
 include README.txt
 recursive-include workflows/locale *
+recursive-include workflows/templates *
