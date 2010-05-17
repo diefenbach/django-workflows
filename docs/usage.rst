@@ -2,11 +2,6 @@
 Usage
 =====
 
-.. warning::
-
-    django-workflows is in alpha state. Please consider the API as supposed 
-    to be changed until it reaches beta state.
-
 Create a simple workflow
 ------------------------
 

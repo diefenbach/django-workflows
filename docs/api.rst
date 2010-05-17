@@ -2,11 +2,6 @@
 Utils
 =====
 
-.. warning::
-
-    django-workflows is in alpha state. Please consider the API as supposed 
-    to be changed until it reaches beta state.
-
 Workflow
 --------
 .. autofunction:: workflows.utils.set_workflow
@@ -41,11 +36,6 @@ Permissions
 =======
 Classes
 =======
-
-.. warning::
-
-    django-workflows is in alpha state. Please consider the API as supposed 
-    to be changed until it reaches beta state.
 
 .. autoclass:: workflows.models.WorkflowBase
     :members:
