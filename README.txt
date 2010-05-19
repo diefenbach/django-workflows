@@ -22,6 +22,12 @@ a look at the CMS `LFC <http://pypi.python.org/pypi/django-lfc>`_
 Changes
 =======
 
+1.0 beta 2 (2010-05-19)
+------------------------
+
+* Bugfix: get_allowed_transitions; return only allowed permissions; issue #2.
+* Added license
+
 1.0 beta 1 (2010-05-17)
 ------------------------
 
