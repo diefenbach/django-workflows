@@ -35,29 +35,6 @@ class WorkflowTestCase(TestCase):
         self.assertEqual(states[0], self.private)
         self.assertEqual(states[1], self.public)
 
-    def test_transitions(self):
-        """
-        """
-        transitions = self.public.transitions.all()
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.make_private)
-
-        transitions = self.private.transitions.all()
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.make_public)
-
-    def test_get_transitions(self):
-        """
-        """
-        request = create_request()
-        transitions = self.private.get_allowed_transitions(request.user)
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.make_public)
-
-        transitions = self.public.get_allowed_transitions(request.user)
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0], self.make_private)
-
     def test_unicode(self):
         """
         """
@@ -316,7 +293,6 @@ class UtilsTestCase(TestCase):
         result = workflows.utils.get_objects_for_workflow("Wrong")
         self.assertEqual(result, [])
 
-
     def test_remove_workflow_from_model(self):
         """
         """
@@ -393,6 +369,33 @@ class UtilsTestCase(TestCase):
         result = workflows.utils.remove_workflow(self.user)
         self.assertEqual(result, None)
 
+    def get_allowed_transitions(self):
+        """Tests get_allowed_transitions method
+        """
+        page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
+        role_1 = permissions.utils.register_role("Role 1")
+        permissions.utils.add_role(self.user, role_1)
+
+        view = permissions.utils.register_permission("Publish", "publish")
+
+        transitions = self.private.get_allowed_transitions(page_1, self.user)
+        self.assertEqual(len(transitions), 1)
+
+        # protect the transition with a permission
+        self.make_public.permission = view
+        self.make_public.save()
+
+        # user has no transition
+        transitions = self.private.get_allowed_transitions(page_1, self.user)
+        self.assertEqual(len(transitions), 0)
+
+        # grant permission
+        permissions.utils.grant_permission(page_1, role_1, view)
+
+        # user has transition again
+        transitions = self.private.get_allowed_transitions(page_1, self.user)
+        self.assertEqual(len(transitions), 1)
+
 class StateTestCase(TestCase):
     """Tests the State model
     """
@@ -400,11 +403,59 @@ class StateTestCase(TestCase):
         """
         """
         create_workflow(self)
+        self.user = User.objects.create()
+        self.role_1 = permissions.utils.register_role("Role 1")
+        permissions.utils.add_role(self.user, self.role_1)
+        self.page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
 
     def test_unicode(self):
         """
         """
         self.assertEqual(self.private.__unicode__(), u"Private (Standard)")
+
+    def test_transitions(self):
+        """
+        """
+        transitions = self.public.transitions.all()
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_private)
+
+        transitions = self.private.transitions.all()
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_public)
+
+    def test_get_transitions(self):
+        """
+        """
+        transitions = self.private.get_allowed_transitions(self.page_1, self.user)
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_public)
+
+        transitions = self.public.get_allowed_transitions(self.page_1, self.user)
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(transitions[0], self.make_private)
+
+    def test_get_allowed_transitions(self):
+        """
+        """
+        self.view = permissions.utils.register_permission("Publish", "publish")
+        transitions = self.private.get_allowed_transitions(self.page_1, self.user)
+        self.assertEqual(len(transitions), 1)
+
+        # protect the transition with a permission
+        self.make_public.permission = self.view
+        self.make_public.save()
+
+        # user has no transition
+        transitions = self.private.get_allowed_transitions(self.page_1, self.user)
+        self.assertEqual(len(transitions), 0)
+
+        # grant permission
+        permissions.utils.grant_permission(self.page_1, self.role_1, self.view)
+
+        # user has transition again
+        transitions = self.private.get_allowed_transitions(self.page_1, self.user)
+        self.assertEqual(len(transitions), 1)
 
 class TransitionTestCase(TestCase):
     """Tests the Transition model

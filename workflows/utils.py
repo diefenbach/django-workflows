@@ -286,7 +286,9 @@ def get_allowed_transitions(obj, user):
 
     transitions = []
     for transition in state.transitions.all():
-        transitions.append(transition)
+        permission = transition.permission
+        if permission is None or self.has_permission(user, permission.codename):
+           transitions.append(transition)
 
     return transitions
 

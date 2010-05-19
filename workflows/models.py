@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy as _
 
 # permissions imports
+import permissions.utils
 from permissions.models import Permission
 from permissions.models import Role
 
@@ -159,10 +160,16 @@ class State(models.Model):
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.workflow.name)
 
-    def get_allowed_transitions(self, user):
-        """Returns all allowed transitions for given user.
+    def get_allowed_transitions(self, obj, user):
+        """Returns all allowed transitions for passed object and user.
         """
-        return self.transitions.all()
+        transitions = []
+        for transition in self.transitions.all():
+            permission = transition.permission
+            if permission is None or permissions.utils.has_permission(obj, user, permission.codename):
+               transitions.append(transition)
+
+        return transitions
 
 class Transition(models.Model):
     """A transition from a source to a destination state. The transition can
