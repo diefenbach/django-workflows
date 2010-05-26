@@ -284,13 +284,7 @@ def get_allowed_transitions(obj, user):
     if state is None:
         return []
 
-    transitions = []
-    for transition in state.transitions.all():
-        permission = transition.permission
-        if permission is None or self.has_permission(user, permission.codename):
-           transitions.append(transition)
-
-    return transitions
+    return state.get_allowed_transitions(obj, user)
 
 def do_transition(obj, transition, user):
     """Processes the passed transition to the passed object (if allowed).
