@@ -396,6 +396,29 @@ class UtilsTestCase(TestCase):
         transitions = self.private.get_allowed_transitions(page_1, self.user)
         self.assertEqual(len(transitions), 1)
 
+    def test_get_workflow_for_object(self):
+        """
+        """
+        result = workflows.utils.get_workflow(self.user)
+        self.assertEqual(result, None)
+        
+        # Set workflow for a user
+        workflows.utils.set_workflow_for_object(self.user, self.w)
+        
+        # Get workflow for the user        
+        result = workflows.utils.get_workflow_for_object(self.user)
+        self.assertEqual(result, self.w)
+
+        # Set workflow for a FlatPage
+        page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
+        workflows.utils.set_workflow_for_object(page_1, self.w)
+
+        result = workflows.utils.get_workflow_for_object(self.user)
+        self.assertEqual(result, self.w)
+
+        result = workflows.utils.get_workflow_for_object(page_1)
+        self.assertEqual(result, self.w)
+
 class StateTestCase(TestCase):
     """Tests the State model
     """

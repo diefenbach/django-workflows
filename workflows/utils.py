@@ -199,7 +199,8 @@ def get_workflow_for_object(obj):
         Django model instance.
     """
     try:
-        wor = WorkflowObjectRelation.objects.get()
+        ctype = ContentType.objects.get_for_model(obj)
+        wor = WorkflowObjectRelation.objects.get(content_id=obj.id, content_type=ctype)
     except WorkflowObjectRelation.DoesNotExist:
         return None
     else:
