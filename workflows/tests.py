@@ -369,7 +369,7 @@ class UtilsTestCase(TestCase):
         result = workflows.utils.remove_workflow(self.user)
         self.assertEqual(result, None)
 
-    def get_allowed_transitions(self):
+    def test_get_allowed_transitions(self):
         """Tests get_allowed_transitions method
         """
         page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
@@ -382,7 +382,7 @@ class UtilsTestCase(TestCase):
         self.assertEqual(len(transitions), 1)
 
         # protect the transition with a permission
-        self.make_public.permission = view
+        self.make_public.permission = view        
         self.make_public.save()
 
         # user has no transition
