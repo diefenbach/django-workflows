@@ -22,6 +22,12 @@ a look at the CMS `LFC <http://pypi.python.org/pypi/django-lfc>`_
 Changes
 =======
 
+1.0 beta 3 (2010-07-07)
+-----------------------
+
+* Bugfix utils.get_allowed_transitions; issue #2
+* Bugfix: get_workflow_for_object method; issue #3
+
 1.0 beta 2 (2010-05-19)
 ------------------------
 

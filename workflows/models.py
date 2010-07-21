@@ -166,9 +166,18 @@ class State(models.Model):
         transitions = []
         for transition in self.transitions.all():
             permission = transition.permission
-            if permission is None or permissions.utils.has_permission(obj, user, permission.codename):
+            if permission is None:
                transitions.append(transition)
-
+            else:
+                # First we try to get the objects specific has_permission
+                # method (in case the object inherits from the PermissionBase
+                # class).
+                try:
+                    if obj.has_permission(user, permission.codename):
+                        transitions.append(transition)
+                except AttributeError:
+                    if permissions.utils.has_permission(obj, user, permission.codename):
+                        transitions.append(transition)
         return transitions
 
 class Transition(models.Model):
