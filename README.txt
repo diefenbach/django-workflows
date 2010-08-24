@@ -22,6 +22,10 @@ a look at the CMS `LFC <http://pypi.python.org/pypi/django-lfc>`_
 Changes
 =======
 
+1.0 (2010-08-24)
+----------------
+* First final release
+
 1.0 beta 4 (2010-07-23)
 -----------------------
 * Changed: State.get_allowed_transitions: try to use the object's has_permissions 
