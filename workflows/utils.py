@@ -2,6 +2,8 @@
 from django.contrib.contenttypes.models import ContentType
 
 # workflows imports
+from permissions.models import ObjectPermission
+from permissions.models import ObjectPermissionInheritanceBlock
 from workflows.models import StateInheritanceBlock
 from workflows.models import StateObjectRelation
 from workflows.models import StatePermissionRelation
@@ -13,7 +15,6 @@ from workflows.models import WorkflowPermissionRelation
 
 # permissions imports
 import permissions.utils
-from permissions.models import Role
 
 def get_objects_for_workflow(workflow):
     """Returns all objects which have passed workflow.
@@ -311,18 +312,19 @@ def update_permissions(obj):
     state = get_state(obj)
 
     # Remove all permissions for the workflow
-    for role in Role.objects.all():
-        for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
-            permissions.utils.remove_permission(obj, role, wpr.permission)
+    ct = ContentType.objects.get_for_model(obj)
+    ps = [wpr.permission for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow)]
 
+    ObjectPermission.objects.filter(content_type = ct, content_id=obj.id, permission__in=ps).delete()
+            
     # Grant permission for the state
     for spr in StatePermissionRelation.objects.filter(state=state):
         permissions.utils.grant_permission(obj, spr.role, spr.permission)
-
+    
     # Remove all inheritance blocks from the object
-    for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow):
-        permissions.utils.remove_inheritance_block(obj, wpr.permission)
-
+    ObjectPermissionInheritanceBlock.objects.filter(
+        content_type = ct, content_id=obj.id, permission__in=ps).delete()
+    
     # Add inheritance blocks of this state to the object
     for sib in StateInheritanceBlock.objects.filter(state=state):
         permissions.utils.add_inheritance_block(obj, sib.permission)
