@@ -33,7 +33,7 @@ class WorkflowBase(object):
         obj
             The object which gets the passed workflow.
         """
-        return workflows.utils.set_workflow_for_object(workflow)
+        return workflows.utils.set_workflow_for_object(self, workflow)
 
     def get_state(self):
         """Returns the current workflow state of the object.
