@@ -35,8 +35,8 @@ class Workflow(models.Model):
 
     """
     name = models.CharField(_(u"Name"), max_length=100, unique=True)
-    initial_state = models.ForeignKey("State", related_name="workflow_state", blank=True, null=True)
-    permissions = models.ManyToManyField(Permission, symmetrical=False, through="WorkflowPermissionRelation")
+    initial_state = models.ForeignKey("State", verbose_name=_(u"Initial state"), related_name="workflow_state", blank=True, null=True)
+    permissions = models.ManyToManyField(Permission, verbose_name=_(u"Permissions"), symmetrical=False, through="WorkflowPermissionRelation")
 
     def __unicode__(self):
         return self.name
