@@ -68,6 +68,10 @@ def remove_workflow_from_model(ctype):
     # instances which have passed workflow.
     workflow = get_workflow_for_model(ctype)
     for obj in get_objects_for_workflow(workflow):
+        # Only take care of the given ctype.
+        obj_ctype = ContentType.objects.get_for_model(obj)
+        if ctype != obj_ctype:
+            continue
         try:
             ctype = ContentType.objects.get_for_model(obj)
             sor = StateObjectRelation.objects.get(content_id=obj.id, content_type=ctype)
@@ -316,15 +320,15 @@ def update_permissions(obj):
     ps = [wpr.permission for wpr in WorkflowPermissionRelation.objects.filter(workflow=workflow)]
 
     ObjectPermission.objects.filter(content_type = ct, content_id=obj.id, permission__in=ps).delete()
-            
+
     # Grant permission for the state
     for spr in StatePermissionRelation.objects.filter(state=state):
         permissions.utils.grant_permission(obj, spr.role, spr.permission)
-    
+
     # Remove all inheritance blocks from the object
     ObjectPermissionInheritanceBlock.objects.filter(
         content_type = ct, content_id=obj.id, permission__in=ps).delete()
-    
+
     # Add inheritance blocks of this state to the object
     for sib in StateInheritanceBlock.objects.filter(state=state):
         permissions.utils.add_inheritance_block(obj, sib.permission)
