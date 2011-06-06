@@ -500,7 +500,7 @@ class RelationsTestCase(TestCase):
         """
         """
         create_workflow(self)
-        self.page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1")
+        self.page_1 = FlatPage.objects.create(url="/page-1/", title="Page 1", id=1)
 
     def test_unicode(self):
         """
