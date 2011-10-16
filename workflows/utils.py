@@ -295,9 +295,10 @@ def get_allowed_transitions(obj, user):
 def do_transition(obj, transition, user):
     """Processes the passed transition to the passed object (if allowed).
     """
+    workflow = get_workflow(obj)
     if not isinstance(transition, Transition):
         try:
-            transition = Transition.objects.get(name=transition)
+            transition = Transition.objects.get(name=transition, workflow=workflow)
         except Transition.DoesNotExist:
             return False
 
