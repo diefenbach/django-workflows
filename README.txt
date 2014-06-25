@@ -11,7 +11,7 @@ For more documentation please visit: http://packages.python.org/django-workflows
 Code
 ====
 
-The code can be found on bitbucket: http://bitbucket.org/diefenbach/django_workflows/
+The code can be found on github: http://github.com/diefenbach/django-workflows
 
 Implementations
 ===============
