@@ -1,5 +1,5 @@
-What is it?
-===========
+Introduction
+============
 
 django-workflows provides a generic workflow engine for Django.
 
@@ -22,13 +22,20 @@ a look at the CMS `LFC <http://pypi.python.org/pypi/django-lfc>`_
 Changes
 =======
 
+1.1 (2014-06-26)
+----------------
+
+* Cleanup and performance improvements
+
 1.0 (2010-08-24)
 ----------------
+
 * First final release
 
 1.0 beta 4 (2010-07-23)
 -----------------------
-* Changed: State.get_allowed_transitions: try to use the object's has_permissions 
+
+* Changed: State.get_allowed_transitions: try to use the object's has_permissions
   method before using the one from the utils
 
 1.0 beta 3 (2010-07-07)
