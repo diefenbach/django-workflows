@@ -22,7 +22,12 @@ a look at the CMS `LFC <http://pypi.python.org/pypi/django-lfc>`_
 Changes
 =======
 
-1.1 (2014-06-26)
+1.1.1 (2014-06-26)
+------------------
+
+* Pins version for django-permissions to 1.1
+
+1.1 (2014-06-25)
 ----------------
 
 * Cleanup and performance improvements
