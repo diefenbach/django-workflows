@@ -10,6 +10,7 @@ import permissions.utils
 from permissions.models import Permission
 from permissions.models import Role
 
+
 class Workflow(models.Model):
     """A workflow consists of a sequence of connected (through transitions)
     states. It can be assigned to a model and / or model instances. If a
@@ -127,13 +128,14 @@ class Workflow(models.Model):
         try:
             wor = WorkflowObjectRelation.objects.get(content_type=ctype, content_id=obj.id)
         except WorkflowObjectRelation.DoesNotExist:
-            WorkflowObjectRelation.objects.create(content = obj, workflow=self)
+            WorkflowObjectRelation.objects.create(content=obj, workflow=self)
             workflows.utils.set_state(obj, self.initial_state)
         else:
             if wor.workflow != self:
                 wor.workflow = self
                 wor.save()
                 workflows.utils.set_state(self.initial_state)
+
 
 class State(models.Model):
     """A certain state within workflow.
@@ -152,7 +154,7 @@ class State(models.Model):
     """
     name = models.CharField(_(u"Name"), max_length=100)
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="states")
-    transitions = models.ManyToManyField("Transition", verbose_name=_(u"Transitions"), blank=True, null=True, related_name="states")
+    transitions = models.ManyToManyField("Transition", verbose_name=_(u"Transitions"), blank=True, related_name="states")
 
     class Meta:
         ordering = ("name", )
@@ -167,7 +169,7 @@ class State(models.Model):
         for transition in self.transitions.all():
             permission = transition.permission
             if permission is None:
-               transitions.append(transition)
+                transitions.append(transition)
             else:
                 # First we try to get the objects specific has_permission
                 # method (in case the object inherits from the PermissionBase
@@ -179,6 +181,7 @@ class State(models.Model):
                     if permissions.utils.has_permission(obj, user, permission.codename):
                         transitions.append(transition)
         return transitions
+
 
 class Transition(models.Model):
     """A transition from a source to a destination state. The transition can
@@ -215,6 +218,7 @@ class Transition(models.Model):
     def __unicode__(self):
         return self.name
 
+
 class StateObjectRelation(models.Model):
     """Stores the workflow state of an object.
 
@@ -233,13 +237,14 @@ class StateObjectRelation(models.Model):
     content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content type"), related_name="state_object", blank=True, null=True)
     content_id = models.PositiveIntegerField(_(u"Content id"), blank=True, null=True)
     content = generic.GenericForeignKey(ct_field="content_type", fk_field="content_id")
-    state = models.ForeignKey(State, verbose_name = _(u"State"))
+    state = models.ForeignKey(State, verbose_name=_(u"State"))
 
     def __unicode__(self):
         return "%s %s - %s" % (self.content_type.name, self.content_id, self.state.name)
 
     class Meta:
         unique_together = ("content_type", "content_id", "state")
+
 
 class WorkflowObjectRelation(models.Model):
     """Stores an workflow of an object.
@@ -268,6 +273,7 @@ class WorkflowObjectRelation(models.Model):
     def __unicode__(self):
         return "%s %s - %s" % (self.content_type.name, self.content_id, self.workflow.name)
 
+
 class WorkflowModelRelation(models.Model):
     """Stores an workflow for a model (ContentType).
 
@@ -283,14 +289,14 @@ class WorkflowModelRelation(models.Model):
         The workflow which is assigned to an object. This needs to be a
         workflow instance.
     """
-    content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content Type"), unique=True)
+    content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content Type"))
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="wmrs")
 
     def __unicode__(self):
         return "%s - %s" % (self.content_type.name, self.workflow.name)
 
-# Permissions relation #######################################################
 
+# Permissions relation #######################################################
 class WorkflowPermissionRelation(models.Model):
     """Stores the permissions for which a workflow is responsible.
 
@@ -313,6 +319,7 @@ class WorkflowPermissionRelation(models.Model):
     def __unicode__(self):
         return "%s %s" % (self.workflow.name, self.permission.name)
 
+
 class StateInheritanceBlock(models.Model):
     """Stores inheritance block for state and permission.
 
@@ -331,6 +338,7 @@ class StateInheritanceBlock(models.Model):
 
     def __unicode__(self):
         return "%s %s" % (self.state.name, self.permission.name)
+
 
 class StatePermissionRelation(models.Model):
     """Stores granted permission for state and role.
